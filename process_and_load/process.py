@@ -11,12 +11,12 @@ def quote_message_cleanup(message):
     message['exchange_timestamp'] = message['exchange_timestamp'].strftime('%Y-%m-%d %H:%M:%S')
 
     # prices has been given in paise, I have converted them into rupees.
-    message['last_traded_price'] = (message['last_traded_price'] / 10000000.0)
-    message['average_traded_price'] = (message['average_traded_price'] / 10000000.0)
-    message['open_price_of_the_day'] = (message['open_price_of_the_day'] / 10000000.0)
-    message['high_price_of_the_day'] = (message['high_price_of_the_day'] / 10000000.0)
-    message['low_price_of_the_day'] = (message['low_price_of_the_day'] / 10000000.0)
-    message['closed_price'] = (message['closed_price'] / 10000000.0)
+    message['last_traded_price'] = (message['last_traded_price'] / 100.0)
+    message['average_traded_price'] = (message['average_traded_price'] / 100.0)
+    message['open_price_of_the_day'] = (message['open_price_of_the_day'] / 100.0)
+    message['high_price_of_the_day'] = (message['high_price_of_the_day'] / 100.0)
+    message['low_price_of_the_day'] = (message['low_price_of_the_day'] / 100.0)
+    message['closed_price'] = (message['closed_price'] / 100.0)
 
     # pop unwanted records
     message.pop('subscription_mode')
