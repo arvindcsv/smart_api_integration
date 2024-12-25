@@ -1,4 +1,15 @@
-import threading
+"""
+In this module, Fetching live data from smart api using websocket integration.
+- Created a trading account on angel one with all integrations.
+- Hardcoded all the credentials in code. Because, we are doing this for internal use.
+- Generating TOTP using QR code.
+- Generate jwtToken and refreshToken these tokens can be expired after 24 hours.
+- Get Symbols list using endpoint which has mentioned in symbols_master_list.py
+- Using SmartApi package creating connection, and they continuously send us ticks per second.
+- Which ever data they are forwarding, i have directly forwarded that record to lambda function.
+- Lambda function is processing the record and inserts record into RDS.
+"""
+
 
 from logzero import logger
 from SmartApi.smartConnect import SmartConnect
@@ -39,82 +50,6 @@ else:
     smartApi.generateToken(refreshToken)
     res=res['data']['exchanges']
 
-    # orderparams = {
-    #     "variety": "NORMAL",
-    #     "tradingsymbol": "SBIN-EQ",
-    #     "symboltoken": "3045",
-    #     "transactiontype": "BUY",
-    #     "exchange": "NSE",
-    #     "ordertype": "LIMIT",
-    #     "producttype": "INTRADAY",
-    #     "duration": "DAY",
-    #     "price": "19500",
-    #     "squareoff": "0",
-    #     "stoploss": "0",
-    #     "quantity": "1"
-    # }
-    # # Method 1: Place an order and return the order ID
-    # orderid = smartApi.placeOrder(orderparams)
-    # logger.info(f"PlaceOrder : {orderid}")
-    # # Method 2: Place an order and return the full response
-    # response = smartApi.placeOrderFullResponse(orderparams)
-    # logger.info(f"PlaceOrder : {response}")
-
-    # modifyparams = {
-    #     "variety": "NORMAL",
-    #     "orderid": orderid,
-    #     "ordertype": "LIMIT",
-    #     "producttype": "INTRADAY",
-    #     "duration": "DAY",
-    #     "price": "19500",
-    #     "quantity": "1",
-    #     "tradingsymbol": "SBIN-EQ",
-    #     "symboltoken": "3045",
-    #     "exchange": "NSE"
-    # }
-    # smartApi.modifyOrder(modifyparams)
-    # logger.info(f"Modify Orders : {modifyparams}")
-    #
-    # smartApi.cancelOrder(orderid, "NORMAL")
-    #
-    # orderbook=smartApi.orderBook()
-    # logger.info(f"Order Book: {orderbook}")
-    #
-    # tradebook=smartApi.tradeBook()
-    # logger.info(f"Trade Book : {tradebook}")
-    #
-    # rmslimit=smartApi.rmsLimit()
-    # logger.info(f"RMS Limit : {rmslimit}")
-    #
-    # pos=smartApi.position()
-    # logger.info(f"Position : {pos}")
-    #
-    # holdings=smartApi.holding()
-    # logger.info(f"Holdings : {holdings}")
-    #
-    # allholdings=smartApi.allholding()
-    # logger.info(f"AllHoldings : {allholdings}")
-    #
-    # exchange = "NSE"
-    # tradingsymbol = "SBIN-EQ"
-    # symboltoken = 3045
-    # ltp=smartApi.ltpData("NSE", "SBIN-EQ", "3045")
-    # logger.info(f"Ltp Data : {ltp}")
-
-    mode="FULL"
-    exchangeTokens= {
-    "NSE": [
-    "3045"
-    ]
-    }
-    marketData=smartApi.getMarketData(mode, exchangeTokens)
-    logger.info(f"Market Data : {marketData}")
-
-    exchange = "BSE"
-    searchscrip = "Titan"
-    searchScripData = smartApi.searchScrip(exchange, searchscrip)
-    logger.info(f"Search Scrip Data : {searchScripData}")
-
     # # Websocket Programming
 
     from SmartApi.smartWebSocketV2 import SmartWebSocketV2
@@ -128,32 +63,13 @@ else:
     mode = 2 # 1 (LTP) 2 (Quote) 3 (Snap Quote) 4 (20-Depth)
 
     # Exchange Type
-    # 1(nse_cm)
-    #
-    # 2(nse_fo)
-    #
-    # 3(bse_cm)
-    #
-    # 4(bse_fo)
-    #
-    # 5(mcx_fo)
-    #
-    # 7(ncx_fo)
-    #
-    # 13(cde_fo)
+    # 1(nse_cm), 2(nse_fo), 3(bse_cm), 4(bse_fo), 5(mcx_fo), 7(ncx_fo), 13(cde_fo)
     token_list = [
         {
-            "exchangeType": 1,
-            "tokens": ['12825']
+            "exchangeType": 3,
+            "tokens": ['544225', '543578'] # OLAELEC, OLATECH
         }
     ]
-    # token_list1 = [
-    #     {
-    #         "action": 0,
-    #         "exchangeType": 1,
-    #         "tokens": ["26009"]
-    #     }
-    # ]
 
     #retry_strategy=0 for simple retry mechanism
     sws = SmartWebSocketV2(AUTH_TOKEN, API_KEY, CLIENT_CODE, FEED_TOKEN,max_retry_attempt=2, retry_strategy=0, retry_delay=10, retry_duration=30)
@@ -219,10 +135,10 @@ else:
     sws.on_close = on_close
 
     sws.connect()
-    print()
-    threading.Thread(target=sws.connect).start()
-
-    sws.on_control_message = on_control_message
+    print("Stream Ended")
+    # threading.Thread(target=sws.connect).start()
+    #
+    # sws.on_control_message = on_control_message
 
     ########################### SmartWebSocket OrderUpdate Sample Code Start Here ###########################
     # from SmartApi.smartWebSocketOrderUpdate import SmartWebSocketOrderUpdate
