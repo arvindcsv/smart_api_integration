@@ -38,7 +38,7 @@ def load(_message):
         db_manager.put_db_connection(conn)
         return 200
     except (Exception, psycopg.DatabaseError) as e:
-        print(e)
+        print("Exception:", e)
         conn.rollback()
         db_manager.put_db_connection(conn)
         return 400
