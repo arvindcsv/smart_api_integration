@@ -101,14 +101,15 @@ else:
         )
 
     def on_data(wsapp, message):
-        logger.info("Ticks: {}".format(message))
+        # logger.info("Ticks: {}".format(message))
 
         # Invoking lambda asynchronously
         invoke_self_lambda_async(message)
         # close_connection()
 
     def on_control_message(wsapp, message):
-        logger.info(f"Control Message: {message}")
+        # logger.info(f"Control Message: {message}")
+        print()
 
     def on_open(wsapp):
         logger.info("on open")
