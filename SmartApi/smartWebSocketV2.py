@@ -84,11 +84,13 @@ class SmartWebSocketV2(object):
         # log_path = os.path.join(log_folder_path, "app.log") # Construct the full path to the log file
         # logzero.logfile(log_path, loglevel=logging.INFO)  # Output logs to a date-wise log file
 
+        """ 1 """
         if not self._sanity_check():
             logger.error("Invalid initialization parameters. Provide valid values for all the tokens.")
             raise Exception("Provide valid value for all the tokens")
 
     def _sanity_check(self):
+        """ 2 """
         if not all([self.auth_token, self.api_key, self.client_code, self.feed_token]):
             return False
         return True
@@ -173,6 +175,7 @@ class SmartWebSocketV2(object):
                         13 -> cde_fo
                     tokens: list of string
         """
+        """ 5 """
         try:
             request_data = {
                 "correlationID": correlation_id,
@@ -287,6 +290,7 @@ class SmartWebSocketV2(object):
         """
             Make the web socket connection with the server
         """
+        """ 3 """
         headers = {
             "Authorization": self.auth_token,
             "x-api-key": self.api_key,
