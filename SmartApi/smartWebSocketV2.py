@@ -15,7 +15,7 @@ class SmartWebSocketV2(object):
 
     ROOT_URI = "wss://smartapisocket.angelone.in/smart-stream"
     HEART_BEAT_MESSAGE = "ping"
-    HEART_BEAT_INTERVAL = 10  # Adjusted to 10s
+    HEART_BEAT_INTERVAL = 25  # Adjusted to 10s
     LITTLE_ENDIAN_BYTE_ORDER = "<"
     RESUBSCRIBE_FLAG = False
     CLOSE_CONNECTION = False
@@ -348,9 +348,9 @@ class SmartWebSocketV2(object):
             if hasattr(self, 'on_error'):
                 self.on_error("Max retry attempt reached", "Connection closed")
             if self.retry_duration is not None and (self.last_pong_timestamp is not None and time.time() - self.last_pong_timestamp > self.retry_duration * 60):
-                logger.warning("Connection closed due to inactivity.")
+                logger.warning(f"Connection closed due to inactivity.{error}")
             else:
-                logger.warning("Connection closed due to max retry attempts reached.")
+                logger.warning(f"Connection closed due to max retry attempts reached.{error}")
 
     # def _on_close(self, wsapp):
     #     try:
