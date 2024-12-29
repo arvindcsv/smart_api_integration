@@ -16,6 +16,7 @@ from SmartApi.smartConnect import SmartConnect
 import pyotp
 import json
 import boto3
+import base64
 
 api_key = '7fJMgLEb'
 username = 'S736247'
@@ -95,6 +96,13 @@ else:
                                      aws_access_key_id='AKIA5OP2EBWWOQAH3UEQ',
                                      aws_secret_access_key='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',
                                      region_name="ap-south-1")
+
+        # Base64 encode the byte data
+        base64_encoded_data = base64.b64encode(payload).decode('utf-8')
+
+        payload = {
+            'data': base64_encoded_data  # Include the encoded data in your payload
+        }
         lambda_resp = lambda_client.invoke(
             FunctionName='arn:aws:lambda:ap-south-1:924479393196:function:testLambda',
             InvocationType='Event',

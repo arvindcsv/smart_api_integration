@@ -4,9 +4,9 @@ import ssl
 import json
 import websocket
 import os
-import logging
 import logzero
 from logzero import logger
+
 
 class SmartWebSocketV2(object):
     """
@@ -121,8 +121,8 @@ class SmartWebSocketV2(object):
 
     def _on_data(self, wsapp, data, data_type, continue_flag):
         if data_type == 2:
-            parsed_message = self._parse_binary_data(data)
-            self.on_data(wsapp, parsed_message)
+            # parsed_message = self._parse_binary_data(data)
+            self.on_data(wsapp, data)
 
     def _on_open(self, wsapp):
         if self.RESUBSCRIBE_FLAG:
@@ -365,6 +365,22 @@ class SmartWebSocketV2(object):
             print("close status code: " + str(close_status_code))
             print("close message: " + str(close_msg))
 
+    def _unpack_data(self, binary_data, start, end, byte_format="I"):
+        """
+            Unpack Binary Data to the integer according to the specified byte_format.
+            This function returns the tuple
+        """
+        return struct.unpack(self.LITTLE_ENDIAN_BYTE_ORDER + byte_format, binary_data[start:end])
+
+    @staticmethod
+    def _parse_token_value(binary_packet):
+        token = ""
+        for i in range(len(binary_packet)):
+            if chr(binary_packet[i]) == '\x00':
+                return token
+            token += chr(binary_packet[i])
+        return token
+
     def _parse_binary_data(self, binary_data):
         parsed_data = {
             "subscription_mode": self._unpack_data(binary_data, 0, 1, byte_format="B")[0],
@@ -414,22 +430,6 @@ class SmartWebSocketV2(object):
         except Exception as e:
             logger.error(f"Error occurred during binary data parsing: {e}")
             raise e
-
-    def _unpack_data(self, binary_data, start, end, byte_format="I"):
-        """
-            Unpack Binary Data to the integer according to the specified byte_format.
-            This function returns the tuple
-        """
-        return struct.unpack(self.LITTLE_ENDIAN_BYTE_ORDER + byte_format, binary_data[start:end])
-
-    @staticmethod
-    def _parse_token_value(binary_packet):
-        token = ""
-        for i in range(len(binary_packet)):
-            if chr(binary_packet[i]) == '\x00':
-                return token
-            token += chr(binary_packet[i])
-        return token
 
     def _parse_best_5_buy_and_sell_data(self, binary_data):
 

@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="smart_api_integrations" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="smart_api_integration (2)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="smart_api_integrations" project-jdk-type="Python SDK" />
 </project>

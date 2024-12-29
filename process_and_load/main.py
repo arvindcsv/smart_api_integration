@@ -1,10 +1,25 @@
 
 import process
 import load_to_rds
+import base64
 
 
 def lambda_handler(message, context):
-    process_message = process.main(message)
+
+    try:
+        base64_encoded_data = message['data']
+
+        # Decode the base64 data back to bytes
+        byte_data = base64.b64decode(base64_encoded_data)
+    except Exception as ex:
+        return {
+            'status_code': 500,
+            'body': 'Error processing bytes',
+            'exception_message': ex
+        }
+
+    format_bytes_data = process._parse_binary_data(byte_data)
+    process_message = process.main(format_bytes_data)
 
     response = load_to_rds.load(process_message)
     return response
@@ -31,6 +46,7 @@ if __name__ == '__main__':
         "low_price_of_the_day": 9226900,
         "closed_price": 9301400
     }
+    bt = {'data': 'AgI1MjUyNAAAAAAAAAAAAAAAAAAAAAAAAAAA9YgAAAAAAADU9d0KlAEAABYrAAAAAAAASwAAAAAAAABmKwAAAAAAAHrsgwYAAAAAAAAAAJDUI0EAAAAAErAgQRw+AAAAAAAAFj8AAAAAAACeIAAAAAAAABRGAAAAAAAA'}
 
     messages = [
     {
@@ -808,4 +824,4 @@ if __name__ == '__main__':
         "closed_price": 9673600
     }
 ]
-    lambda_handler(event, {})
+    lambda_handler(bt, {})
