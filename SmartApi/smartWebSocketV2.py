@@ -4,9 +4,9 @@ import ssl
 import json
 import websocket
 import os
-import logging
 import logzero
 from logzero import logger
+
 
 class SmartWebSocketV2(object):
     """
@@ -15,7 +15,7 @@ class SmartWebSocketV2(object):
 
     ROOT_URI = "wss://smartapisocket.angelone.in/smart-stream"
     HEART_BEAT_MESSAGE = "ping"
-    HEART_BEAT_INTERVAL = 10  # Adjusted to 10s
+    HEART_BEAT_INTERVAL = 25  # Adjusted to 10s
     LITTLE_ENDIAN_BYTE_ORDER = "<"
     RESUBSCRIBE_FLAG = False
     CLOSE_CONNECTION = False
@@ -84,11 +84,13 @@ class SmartWebSocketV2(object):
         # log_path = os.path.join(log_folder_path, "app.log") # Construct the full path to the log file
         # logzero.logfile(log_path, loglevel=logging.INFO)  # Output logs to a date-wise log file
 
+        """ 1 """
         if not self._sanity_check():
             logger.error("Invalid initialization parameters. Provide valid values for all the tokens.")
             raise Exception("Provide valid value for all the tokens")
 
     def _sanity_check(self):
+        """ 2 """
         if not all([self.auth_token, self.api_key, self.client_code, self.feed_token]):
             return False
         return True
@@ -119,8 +121,8 @@ class SmartWebSocketV2(object):
 
     def _on_data(self, wsapp, data, data_type, continue_flag):
         if data_type == 2:
-            parsed_message = self._parse_binary_data(data)
-            self.on_data(wsapp, parsed_message)
+            # parsed_message = self._parse_binary_data(data)
+            self.on_data(wsapp, data)
 
     def _on_open(self, wsapp):
         if self.RESUBSCRIBE_FLAG:
@@ -173,6 +175,7 @@ class SmartWebSocketV2(object):
                         13 -> cde_fo
                     tokens: list of string
         """
+        """ 5 """
         try:
             request_data = {
                 "correlationID": correlation_id,
@@ -287,6 +290,7 @@ class SmartWebSocketV2(object):
         """
             Make the web socket connection with the server
         """
+        """ 3 """
         headers = {
             "Authorization": self.auth_token,
             "x-api-key": self.api_key,
@@ -321,6 +325,7 @@ class SmartWebSocketV2(object):
 
     def _on_error(self, wsapp, error):
         self.RESUBSCRIBE_FLAG = True
+        logger.info(f"{error}")
         if self.current_retry_attempt < self.MAX_RETRY_ATTEMPT:
             logger.warning(f"Attempting to resubscribe/reconnect (Attempt {self.current_retry_attempt + 1})...")
             self.current_retry_attempt += 1
@@ -344,9 +349,9 @@ class SmartWebSocketV2(object):
             if hasattr(self, 'on_error'):
                 self.on_error("Max retry attempt reached", "Connection closed")
             if self.retry_duration is not None and (self.last_pong_timestamp is not None and time.time() - self.last_pong_timestamp > self.retry_duration * 60):
-                logger.warning("Connection closed due to inactivity.")
+                logger.warning(f"Connection closed due to inactivity.{error}")
             else:
-                logger.warning("Connection closed due to max retry attempts reached.")
+                logger.warning(f"Connection closed due to max retry attempts reached.{error}")
 
     # def _on_close(self, wsapp):
     #     try:
@@ -360,6 +365,22 @@ class SmartWebSocketV2(object):
         if close_status_code or close_msg:
             print("close status code: " + str(close_status_code))
             print("close message: " + str(close_msg))
+
+    def _unpack_data(self, binary_data, start, end, byte_format="I"):
+        """
+            Unpack Binary Data to the integer according to the specified byte_format.
+            This function returns the tuple
+        """
+        return struct.unpack(self.LITTLE_ENDIAN_BYTE_ORDER + byte_format, binary_data[start:end])
+
+    @staticmethod
+    def _parse_token_value(binary_packet):
+        token = ""
+        for i in range(len(binary_packet)):
+            if chr(binary_packet[i]) == '\x00':
+                return token
+            token += chr(binary_packet[i])
+        return token
 
     def _parse_binary_data(self, binary_data):
         parsed_data = {
@@ -410,22 +431,6 @@ class SmartWebSocketV2(object):
         except Exception as e:
             logger.error(f"Error occurred during binary data parsing: {e}")
             raise e
-
-    def _unpack_data(self, binary_data, start, end, byte_format="I"):
-        """
-            Unpack Binary Data to the integer according to the specified byte_format.
-            This function returns the tuple
-        """
-        return struct.unpack(self.LITTLE_ENDIAN_BYTE_ORDER + byte_format, binary_data[start:end])
-
-    @staticmethod
-    def _parse_token_value(binary_packet):
-        token = ""
-        for i in range(len(binary_packet)):
-            if chr(binary_packet[i]) == '\x00':
-                return token
-            token += chr(binary_packet[i])
-        return token
 
     def _parse_best_5_buy_and_sell_data(self, binary_data):
 
