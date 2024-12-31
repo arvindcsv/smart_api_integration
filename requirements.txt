@@ -5,6 +5,6 @@ psycopg[binary]
 psycopg_pool
 pyotp
 requests
-websocket
 websocket-client
 numpy
+logzero
