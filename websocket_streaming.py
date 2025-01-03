@@ -17,6 +17,7 @@ import pyotp
 import json
 import boto3
 import base64
+from datetime import datetime, timedelta, timezone
 
 api_key = '7fJMgLEb'
 username = 'S736247'
@@ -83,6 +84,41 @@ else:
 
     #retry_strategy=1 for exponential retry mechanism
     # sws = SmartWebSocketV2(AUTH_TOKEN, API_KEY, CLIENT_CODE, FEED_TOKEN,max_retry_attempt=3, retry_strategy=1, retry_delay=10,retry_multiplier=2, retry_duration=30)
+    def epoch_ttl(minutes=0, hours=0, days=0):
+        """ Return time to live in epoch-seconds """
+        curr_datetime = datetime.now(tz=timezone(timedelta(hours=5.5)))
+
+        ttl = curr_datetime + timedelta(minutes=minutes, hours=hours, days=days)
+        ttl = ttl.timestamp()
+
+        return int(ttl)
+
+    def insert_into_dynamo(item):
+        """
+        insert record into given dynamoDB table
+        :param status:
+        :param item:
+        :param reason:
+        :param table: dynamoDb table
+        :return:
+        """
+        # Base64 encode the byte data
+        item = base64.b64encode(item).decode('utf-8')
+        curr_datetime = datetime.now(tz=timezone(timedelta(hours=5.5))).strftime("%Y-%m-%d %H:%M:%S")
+        dynamodb_obj = boto3.resource('dynamodb',
+                                      aws_access_key_id='AKIA5OP2EBWWOQAH3UEQ',
+                                      aws_secret_access_key='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',
+                                      region_name="ap-south-1")
+
+        record = {"data": item, "timestamp": curr_datetime}
+        dynamodb_table = dynamodb_obj.Table('testTable1')
+
+        try:
+            res = dynamodb_table.put_item(
+                Item=record
+            )
+        except Exception as ex:
+            print(item, "Failed putting records in dynamoDB table.", ex)
 
     def invoke_self_lambda_async(payload):
         """
@@ -114,8 +150,9 @@ else:
         # logger.info("Ticks: {}".format(message))
 
         # Invoking lambda asynchronously
-        invoke_self_lambda_async(message)
+        # invoke_self_lambda_async(message)
         # close_connection()
+        insert_into_dynamo(message)
 
     def on_control_message(wsapp, message):
         # logger.info(f"Control Message: {message}")

@@ -6,20 +6,27 @@ import base64
 
 def lambda_handler(message, context):
 
-    try:
-        base64_encoded_data = message['data']
+    final_records = []
+    for rec in message['Records']:
 
-        # Decode the base64 data back to bytes
-        byte_data = base64.b64decode(base64_encoded_data)
-    except Exception as ex:
-        return {
-            'status_code': 500,
-            'body': 'Error processing bytes',
-            'exception_message': ex
-        }
+        try:
+            base64_encoded_data = rec['dynamodb']['NewImage']['data']['S']
 
-    format_bytes_data = process._parse_binary_data(byte_data)
-    process_message = process.main(format_bytes_data)
+            # Decode the base64 data back to bytes
+            byte_data = base64.b64decode(base64_encoded_data)
+            format_bytes_data = process._parse_binary_data(byte_data)
+
+            final_records.append(format_bytes_data)
+            print()
+        except Exception as ex:
+            return {
+                'status_code': 500,
+                'body': 'Error processing bytes',
+                'exception_message': ex
+            }
+
+
+    process_message = process.main(final_records)
 
     response = load_to_rds.load(process_message)
     return response
@@ -824,4 +831,7 @@ if __name__ == '__main__':
         "closed_price": 9673600
     }
 ]
-    lambda_handler(bt, {})
+
+    dynamo_record = {'Records': [{'eventID': '1f784074ddc10b2425f59c9766b126de', 'eventName': 'INSERT', 'eventVersion': '1.1', 'eventSource': 'aws:dynamodb', 'awsRegion': 'ap-south-1', 'dynamodb': {'ApproximateCreationDateTime': 1735875951.0, 'Keys': {'timestamp': {'S': '2025-01-03 09:15:50'}}, 'NewImage': {'data': {'S': 'AgI0MjUyMwAAAAAAAAAAAAAAAAAAAAAAAAAAx2ADAAAAAACj9EQqlAEAAEhNBgAAAAAArwAAAAAAAACdTwYAAAAAAEjVAAAAAAAAAAAAACDX50AAAAAAkAXwQH9XBgAAAAAAf1cGAAAAAADgSwYAAAAAAARVBgAAAAAA'}, 'timestamp': {'S': '2025-01-03 09:15:50'}}, 'SequenceNumber': '188300000000017721796529', 'SizeBytes': 224, 'StreamViewType': 'NEW_AND_OLD_IMAGES'}, 'eventSourceARN': 'arn:aws:dynamodb:ap-south-1:924479393196:table/testTable1/stream/2025-01-03T03:24:15.690'}, {'eventID': '0824795a6f1b240b45ba71cbaf8b895d', 'eventName': 'MODIFY', 'eventVersion': '1.1', 'eventSource': 'aws:dynamodb', 'awsRegion': 'ap-south-1', 'dynamodb': {'ApproximateCreationDateTime': 1735875951.0, 'Keys': {'timestamp': {'S': '2025-01-03 09:15:50'}}, 'NewImage': {'data': {'S': 'AgI0MjUyMwAAAAAAAAAAAAAAAAAAAAAAAAAAK2gDAAAAAACw9UQqlAEAAKxNBgAAAAAArwAAAAAAAACWTwYAAAAAAATYAAAAAAAAAAAAAOCk5kAAAAAAAGjwQH9XBgAAAAAAf1cGAAAAAADgSwYAAAAAAARVBgAAAAAA'}, 'timestamp': {'S': '2025-01-03 09:15:50'}}, 'OldImage': {'data': {'S': 'AgI0MjUyMwAAAAAAAAAAAAAAAAAAAAAAAAAAx2ADAAAAAACj9EQqlAEAAEhNBgAAAAAArwAAAAAAAACdTwYAAAAAAEjVAAAAAAAAAAAAACDX50AAAAAAkAXwQH9XBgAAAAAAf1cGAAAAAADgSwYAAAAAAARVBgAAAAAA'}, 'timestamp': {'S': '2025-01-03 09:15:50'}}, 'SequenceNumber': '188400000000017721796557', 'SizeBytes': 420, 'StreamViewType': 'NEW_AND_OLD_IMAGES'}, 'eventSourceARN': 'arn:aws:dynamodb:ap-south-1:924479393196:table/testTable1/stream/2025-01-03T03:24:15.690'}, {'eventID': '56408eab33d5ccb07464caebe5c04b9b', 'eventName': 'MODIFY', 'eventVersion': '1.1', 'eventSource': 'aws:dynamodb', 'awsRegion': 'ap-south-1', 'dynamodb': {'ApproximateCreationDateTime': 1735875951.0, 'Keys': {'timestamp': {'S': '2025-01-03 09:15:50'}}, 'NewImage': {'data': {'S': 'AgI0MjUyMwAAAAAAAAAAAAAAAAAAAAAAAAAALWgDAAAAAAAI90QqlAEAAKxNBgAAAAAArwAAAAAAAACWTwYAAAAAAATYAAAAAAAAAAAAAOCk5kAAAAAAAGjwQH9XBgAAAAAAf1cGAAAAAADgSwYAAAAAAARVBgAAAAAA'}, 'timestamp': {'S': '2025-01-03 09:15:50'}}, 'OldImage': {'data': {'S': 'AgI0MjUyMwAAAAAAAAAAAAAAAAAAAAAAAAAAK2gDAAAAAACw9UQqlAEAAKxNBgAAAAAArwAAAAAAAACWTwYAAAAAAATYAAAAAAAAAAAAAOCk5kAAAAAAAGjwQH9XBgAAAAAAf1cGAAAAAADgSwYAAAAAAARVBgAAAAAA'}, 'timestamp': {'S': '2025-01-03 09:15:50'}}, 'SequenceNumber': '188500000000017721796597', 'SizeBytes': 420, 'StreamViewType': 'NEW_AND_OLD_IMAGES'}, 'eventSourceARN': 'arn:aws:dynamodb:ap-south-1:924479393196:table/testTable1/stream/2025-01-03T03:24:15.690'}]}
+
+    lambda_handler(dynamo_record, {})

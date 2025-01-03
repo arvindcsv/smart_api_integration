@@ -31,6 +31,13 @@ SUBSCRIPTION_MODE_MAP = {
 
 wsapp = None
 
+# Class for d-types
+class dTypes:
+    # types
+    string = 'string'
+    int = 'Int64'
+    float = 'Float64'
+
 
 def _unpack_data(binary_data, start, end, byte_format="I"):
     """
@@ -169,9 +176,24 @@ def _parse_depth_20_buy_and_sell_data(binary_data):
 
 def quote_message_cleanup(message):
 
+    df = pd.DataFrame(message)
+
+    df = df[['exchange_type', 'token', 'exchange_timestamp', 'last_traded_price', 'last_traded_quantity',
+           'average_traded_price', 'volume_trade_for_the_day', 'total_buy_quantity', 'total_sell_quantity',
+           'open_price_of_the_day', 'high_price_of_the_day', 'low_price_of_the_day', 'closed_price']]
+
+    df = df.astype(
+        {'exchange_type': dTypes.int, 'token': dTypes.string, 'exchange_timestamp': dTypes.int,
+         'last_traded_price': dTypes.int, 'last_traded_quantity': dTypes.int,
+         'average_traded_price': dTypes.int, 'volume_trade_for_the_day': dTypes.int,
+         'total_buy_quantity': dTypes.int, 'total_sell_quantity': dTypes.int,
+         'open_price_of_the_day': dTypes.int, 'high_price_of_the_day': dTypes.int, 'low_price_of_the_day': dTypes.int,
+         'closed_price': dTypes.int})
+
     # For a specific timezone directly using tz_localize, if you don't want the intermediate UTC value.
-    message['exchange_timestamp'] = pd.to_datetime(message['exchange_timestamp'], unit='ms').tz_localize('UTC').tz_convert(
-        'Asia/Kolkata')
+    df['exchange_timestamp'] = pd.to_datetime(df['exchange_timestamp'], unit='ms')
+
+    df['exchange_timestamp'] = df['exchange_timestamp'].dt.tz_localize('UTC').dt.tz_convert('Asia/Kolkata')
 
     message['exchange_timestamp'] = message['exchange_timestamp'].strftime('%Y-%m-%d %H:%M:%S')
 
