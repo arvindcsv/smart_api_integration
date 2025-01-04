@@ -121,8 +121,13 @@ class SmartWebSocketV2(object):
 
     def _on_data(self, wsapp, data, data_type, continue_flag):
         if data_type == 2:
+            # as of now we required token to keep as sort_key in dynamodb table.
+            token = self._parse_token_value(data[2:27])
+            # exchange_timestamp = self._unpack_data(data, 35, 43, byte_format="q")[0]
+
             # parsed_message = self._parse_binary_data(data)
-            self.on_data(wsapp, data)
+            formated_data = {"token": token, "data": data}
+            self.on_data(wsapp, formated_data)
 
     def _on_open(self, wsapp):
         if self.RESUBSCRIBE_FLAG:

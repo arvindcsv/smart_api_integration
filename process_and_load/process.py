@@ -195,22 +195,23 @@ def quote_message_cleanup(message):
 
     df['exchange_timestamp'] = df['exchange_timestamp'].dt.tz_localize('UTC').dt.tz_convert('Asia/Kolkata')
 
-    message['exchange_timestamp'] = message['exchange_timestamp'].strftime('%Y-%m-%d %H:%M:%S')
-
+    df['exchange_timestamp'] = df['exchange_timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    df = df.drop_duplicates(subset='exchange_timestamp', keep="last")
     # prices has been given in paise, I have converted them into rupees.
-    message['last_traded_price'] = (message['last_traded_price'] / 100.0)
-    message['average_traded_price'] = (message['average_traded_price'] / 100.0)
-    message['open_price_of_the_day'] = (message['open_price_of_the_day'] / 100.0)
-    message['high_price_of_the_day'] = (message['high_price_of_the_day'] / 100.0)
-    message['low_price_of_the_day'] = (message['low_price_of_the_day'] / 100.0)
-    message['closed_price'] = (message['closed_price'] / 100.0)
+    df['last_traded_price'] = (df['last_traded_price'] / 100.0)
+    df['average_traded_price'] = (df['average_traded_price'] / 100.0)
+    df['open_price_of_the_day'] = (df['open_price_of_the_day'] / 100.0)
+    df['high_price_of_the_day'] = (df['high_price_of_the_day'] / 100.0)
+    df['low_price_of_the_day'] = (df['low_price_of_the_day'] / 100.0)
+    df['closed_price'] = (df['closed_price'] / 100.0)
 
+    volumne = (sum(df['total_buy_quantity']) + sum(df['total_sell_quantity'])) / 100
     # pop unwanted records
-    message.pop('subscription_mode')
-    message.pop('subscription_mode_val')
-    message.pop('sequence_number')
+    # message.pop('subscription_mode')
+    # message.pop('subscription_mode_val')
+    # message.pop('sequence_number')
 
-    return message
+    return df
 
 
 def main(event):

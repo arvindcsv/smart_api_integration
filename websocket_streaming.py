@@ -10,12 +10,13 @@ In this module, Fetching live data from smart api using websocket integration.
 - Lambda function is processing the record and inserts record into RDS.
 """
 
-
+import requests
 from logzero import logger
 from SmartApi.smartConnect import SmartConnect
 import pyotp
 import json
 import boto3
+from boto3 import exceptions
 import base64
 from datetime import datetime, timedelta, timezone
 
@@ -51,6 +52,44 @@ else:
     # logger.info(f"Get Profile: {res}")
     smartApi.generateToken(refreshToken)
     res=res['data']['exchanges']
+    data = {
+        "mode": "FULL",
+        "exchangeTokens": {
+            "NFO": ["42523"]
+        }
+    }
+
+    # Headers with appropriate values
+    headers = {
+        "X-PrivateKey": api_key,
+        "Accept": "application/json",
+        "X-SourceID": "WEB",
+        "X-ClientLocalIP": "",
+        "X-ClientPublicIP": "",
+        "X-MACAddress": "",
+        "X-UserType": "USER",
+        "Authorization": f"Bearer {refreshToken}",
+        "Content-Type": "application/json"
+    }
+
+    # Base URL for AngelOne API
+    base_url = "https://apiconnect.angelone.in"
+
+    # Construct the API endpoint URL
+    url = f"{base_url}/rest/secure/angelbroking/market/v1/quote/"
+
+    try:
+        # Send the POST request
+        response = requests.post(url, headers=headers, json=data)
+
+        # Check for successful response
+        response.raise_for_status()  # Raise an exception for non-2xx status codes
+
+        # Print the decoded JSON data
+        print(response.json())
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
 
     # # Websocket Programming
 
@@ -102,23 +141,30 @@ else:
         :param table: dynamoDb table
         :return:
         """
-        # Base64 encode the byte data
-        item = base64.b64encode(item).decode('utf-8')
-        curr_datetime = datetime.now(tz=timezone(timedelta(hours=5.5))).strftime("%Y-%m-%d %H:%M:%S")
+
         dynamodb_obj = boto3.resource('dynamodb',
                                       aws_access_key_id='AKIA5OP2EBWWOQAH3UEQ',
                                       aws_secret_access_key='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',
                                       region_name="ap-south-1")
 
-        record = {"data": item, "timestamp": curr_datetime}
-        dynamodb_table = dynamodb_obj.Table('testTable1')
+        dynamodb_table = dynamodb_obj.Table('new_table')
 
         try:
-            res = dynamodb_table.put_item(
+            # Base64 encode the byte data
+            item['data'] = base64.b64encode(item['data']).decode('utf-8')
+            curr_datetime = datetime.now(tz=timezone(timedelta(hours=5.5))).strftime("%Y-%m-%d %H:%M:%S")
+            record = {"data": item['data'], "timestamp": curr_datetime, 'token': item['token']}
+            dynamodb_table.put_item(
                 Item=record
             )
         except Exception as ex:
-            print(item, "Failed putting records in dynamoDB table.", ex)
+            # invoke_self_lambda_async(traceback.format_exc())
+            print(traceback.format_exc())
+        except boto3.exceptions as ex:
+            print(f"Error putting item in DynamoDB: {traceback.format_exc()}")
+        except ConnectionError as ex:
+            # Handle network errors (optional: reconnect?)
+            print(f"Connection error: {traceback.format_exc()}")
 
     def invoke_self_lambda_async(payload):
         """
@@ -140,8 +186,8 @@ else:
         payload = {
             'data': base64_encoded_data  # Include the encoded data in your payload
         }
-        lambda_resp = lambda_client.invoke(
-            FunctionName='arn:aws:lambda:ap-south-1:924479393196:function:testLambda',
+        lambda_client.invoke(
+            FunctionName='arn:aws:lambda:ap-south-1:924479393196:function:printExceptionLambda',
             InvocationType='Event',
             Payload=json.dumps(payload)
         )
